@@ -71,13 +71,13 @@ jobs:
     working_directory: ~/
     steps:
       - checkout
-      - run:
-          name: Checkout Submodule
-          command: |
-            ls $(pwd)
-            cd mmdeploy
-            git submodule sync
-            git submodule update --init
+#      - run:
+#          name: Checkout Submodule
+#          command: |
+#            ls $(pwd)
+#            cd mmdeploy
+#            git submodule sync
+#            git submodule update --init
 #      - run:
 #          name: Build mmdeploy-cpu docker image
 #          command: |
