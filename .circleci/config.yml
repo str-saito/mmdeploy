@@ -24,7 +24,7 @@ commands:
       - run:
           name: Checkout submodule
           command: |
-            echo $(pwd)
+            echo ">> the workspace of circleci is : $(pwd)"
             cd mmdeploy
             git submodule sync
             git submodule update --init
@@ -63,26 +63,19 @@ jobs:
             interrogate -v --ignore-init-method --ignore-module --ignore-nested-functions --ignore-regex "__repr__" --fail-under 80 mmdeploy
 
   # build mmdeploy using its CPU Dockerfile
-  test_cpu:
+  build_cpu_image:
     machine:
       image: ubuntu-2004:202111-02
       docker_layer_caching: true
     resource_class: large
 #    working_directory: ~/
     steps:
-      - checkout
+      - checkout_full
       - run:
-          name: Checkout Submodule
+          name: Build mmdeploy-cpu docker image
           command: |
-            echo $(pwd)
-            cd mmdeploy
-            git submodule sync
-            git submodule update --init
-#      - run:
-#          name: Build mmdeploy-cpu docker image
-#          command: |
-#            cd mmdeploy
-#            docker build docker/CPU/ -t mmdeploy:cpu
+            echo ">> mmdeploy path: $(pwd)"
+            docker build docker/CPU/ -t mmdeploy:cpu
 
 
 # Invoke jobs via workflows
@@ -91,5 +84,4 @@ workflows:
   pr_stage_test:
     jobs:
       - lint
-      - test_cpu:
-          name: build cpu version on ubuntu platform
+      - build_cpu_image
