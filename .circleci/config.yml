@@ -21,8 +21,13 @@ commands:
     description: "Checkout the whole package of MMDeploy"
     steps:
       - checkout
-      - run: git submodule sync
-      - run: git submodule update --init
+      - run: echo $(pwd); ls $(pwd)
+      - run:
+          name: Checkout submodule
+          command: |
+            cd mmdeploy
+            git submodule sync
+            git submodule update --init
 
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
