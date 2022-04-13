@@ -70,7 +70,14 @@ jobs:
     resource_class: large
     working_directory: ~/
     steps:
-      - checkout_full
+      - checkout
+      - run:
+          name: Checkout Submodule
+          command: |
+            ls $(pwd)
+            cd mmdeploy
+            git submodule sync
+            git submodule update --init
 #      - run:
 #          name: Build mmdeploy-cpu docker image
 #          command: |
