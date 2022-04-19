@@ -63,12 +63,14 @@ jobs:
             interrogate -v --ignore-init-method --ignore-module --ignore-nested-functions --ignore-regex "__repr__" --fail-under 80 mmdeploy
 
   # build mmdeploy using its CPU Dockerfile
-  build_cpu_image:
+  build_cpu:
+    parameters:
+      cache_key:
+        type: string
     machine:
       image: ubuntu-2004:202111-02
       docker_layer_caching: true
     resource_class: large
-#    working_directory: ~/
     steps:
       - checkout_full
       - run:
@@ -76,12 +78,56 @@ jobs:
           command: |
             echo ">> mmdeploy path: $(pwd)"
             docker build docker/CPU/ -t mmdeploy:cpu
-
-
+  
+  setup_environment:
+    parameters:
+      python:
+        type: string
+        default: "3.7.4"
+      torch:
+        type: string
+      torchvision:
+        type: string
+      mmcv:
+        type: string
+        default: "1.4.0"
+    machine:
+      image: ubuntu-2004:202111-02
+    resource_class: large
+    steps:
+      - restore_cache:
+          key: v1-<< parameters.python >>-<< parameters.torch >>-<< parameters.torchvision>>-<<parameters.mmcv>>
+      - run:
+          name: Install python via Conda
+          command: |
+            echo 'the current path: ' $(pwd)
+            ls $(pwd)
+            curl -fsSL -v -o miniconda.sh -O https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+            bash miniconda.sh -b -p conda
+            rm miniconda.sh
+            conda/bin/conda install -y python=<< parameters.python >> cython
+            conda/bin/conda clean -ya
+      - run:
+          name: Install Pytorch
+          command: |
+            conda/bin/pip install torch==<< parameters.torch >>+cpu torchvision==<< parameters.torchvision >>+cpu -f https://download.pytorch.org/whl/torch_stable.html
+      - run:
+          name: Install mmcv-full
+          command: |
+            conda/bin/pip install mmcv-full==<< parameters.mmcv >> -f https://download.openmmlab.com/mmcv/dist/cpu/torch<< parameters.torch >>/index.html
+      - save_cache:
+          paths:
+            - conda
+          key: v1-<< parameters.python >>-<< parameters.torch >>-<< parameters.torchvision>>-<<parameters.mmcv>>
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
   pr_stage_test:
     jobs:
-      - lint
-      - build_cpu_image
+      - setup_environment:
+          python: 3.7.4
+          torch: 1.8.0
+          torchvision: 0.9.0
+          mmcv: 1.4.0
+      # - build_cpu:
+      #     cache_key: v1-3.7.4-1.8.0-0.9.0-1.4.0
